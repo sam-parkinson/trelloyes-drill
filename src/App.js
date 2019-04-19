@@ -7,12 +7,22 @@ function App(props) {
 
   const allCards = props.store.allCards;
 
-  console.log(lists, allCards);
-
   const arrayList = lists.map(i => (
-    <List />
-  )
-
+    <List
+      key={i.id} 
+      id={i.id}
+      header={i.header}
+      cards={i.cardIds.map(x => {
+          const obj = {};
+          obj.id = x;
+          obj.title = allCards[x].title;
+          obj.content = allCards[x].content;
+          return obj;
+        }
+      )}
+    >
+    </List>
+    )
   )
 
   return (
@@ -21,7 +31,7 @@ function App(props) {
         <h1>Trelloyes!</h1>
       </header>
       <div className='App-list'>
-        {/* content goes here */}
+        {arrayList}
       </div>
     </main>
   );
