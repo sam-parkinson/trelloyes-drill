@@ -1,40 +1,107 @@
 import React from 'react';
 import List from "./composition/List";
+import STORE from './store';
 import './App.css';
 
-function App(props) {
-  const lists = props.store.lists;
+const newRandomCard = () => {
+  const id = Math.random().toString(36).substring(2, 4)
+    + Math.random().toString(36).substring(2, 4);
+  return {
+    id,
+    title: `Random Card ${id}`,
+    content: 'lorem ipsum',
+  }
+}
 
-  const allCards = props.store.allCards;
-
-  const arrayList = lists.map(i => (
-    <List
-      key={i.id} 
-      id={i.id}
-      header={i.header}
-      cards={i.cardIds.map(x => {
-          const obj = {};
-          obj.id = x;
-          obj.title = allCards[x].title;
-          obj.content = allCards[x].content;
-          return obj;
-        }
-      )}
-    >
-    </List>
-    )
-  )
-
-  return (
-    <main className='App'>
-      <header className='App-header'>
-        <h1>Trelloyes!</h1>
-      </header>
-      <div className='App-list'>
-        {arrayList}
-      </div>
-    </main>
+function omit(obj, keyToOmit) {
+  return Object.entries(obj).reduce(
+    (newObj, [key, value]) =>
+        key === keyToOmit ? newObj : {...newObj, [key]: value},
+    {}
   );
+}
+
+class App extends React.Component {
+  state = {store: STORE};
+
+  addRandomItem = (listId) => {
+    const newCard = newRandomCard()
+    const newLists = this.state.store.lists.map(list => {
+      if (list.id === listId) {
+      	return {
+          ...list,
+          cardIds: [...list.cardIds, newCard.id]
+        };
+      }
+      return list;
+    })
+    this.setState({
+      store: {
+        lists: newLists,
+        allCards: {
+          ...this.state.store.allCards,
+          [newCard.id]: newCard
+        }
+      }
+    })
+  }
+
+  deleteItem = (cardId) => {
+    const { lists, allCards } = this.state.store;
+
+    const newLists = lists.map(list => ({
+      ...list,
+      cardIds: list.cardIds.filter(id => id !== cardId)
+    }));
+
+    const newCards = omit(allCards, cardId);
+
+    this.setState({
+      store: {
+        lists: newLists,
+        allCards: newCards
+      }
+    })
+  }
+
+  arrayList = () => {
+    const lists = this.state.store.lists;
+    const allCards = this.state.store.allCards;
+    const arrayList = lists.map(i => (
+      <List
+        key={i.id} 
+        id={i.id}
+        header={i.header}
+        cards={i.cardIds.map(x => {
+            const obj = {};
+            obj.id = x;
+            obj.title = allCards[x].title;
+            obj.content = allCards[x].content;
+            return obj;
+          }
+        )}
+        deleteItem={(item) => this.deleteItem(item)}
+        addItem={this.addRandomItem}
+      >
+      </List>
+      )
+    )
+
+    return arrayList
+  }
+
+  render() {
+    return (
+      <main className='App'>
+        <header className='App-header'>
+          <h1>Trelloyes!</h1>
+        </header>
+        <div className='App-list'>
+          {this.arrayList()}
+        </div>
+      </main>
+    );
+  }
 }
 
 export default App;
